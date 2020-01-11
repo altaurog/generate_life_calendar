@@ -3,6 +3,7 @@ import argparse
 import sys
 import os
 import cairo
+import math
 
 DOC_WIDTH = 1872   # 26 inches
 DOC_HEIGHT = 2880  # 40 inches
@@ -23,7 +24,7 @@ MAX_TITLE_SIZE = 30
 DEFAULT_TITLE = "LIFE CALENDAR"
 
 NUM_ROWS = 90
-NUM_COLUMNS = 52
+NUM_COLUMNS = 53  # Some years have 53 weeks.
 
 Y_MARGIN = 144
 BOX_MARGIN = 6
@@ -78,24 +79,28 @@ def is_current_week(now, month, day):
 
     return (now <= date1 < end) or (now <= date2 < end)
 
+def get_week_number(date):
+    return date.isocalendar()[1]
+
+def weeks_in_year(year):
+    def p(year):
+        return (year + math.floor(year/4.) - math.floor(year/100.) + math.floor(year/400.)) % 7
+    return 53 if (p(year) == 4 or p(year - 1) == 3) else 52
+
 def draw_row(ctx, pos_y, start_date, date):
     """
-    Draws a row of 52 squares, starting at pos_y
+    Draws a row of squares, one per week of the year, starting at pos_y.
+    If start_date and date are in the same year, then skip squares for weeks before start_date.
+    Draw a 53rd square for years with 53 weeks.
     """
 
-    pos_x = X_MARGIN
+    START_WEEK = 1 if date.year != start_date.year else get_week_number(start_date)
+    END_WEEK = weeks_in_year(date.year)
 
-    for i in range(NUM_COLUMNS):
-        fill=(1, 1, 1)
-
-        if is_current_week(date, start_date.month, start_date.day):
-            fill = BIRTHDAY_COLOUR
-        elif is_current_week(date, 1, 1):
-            fill = NEWYEAR_COLOUR
-
-        draw_square(ctx, pos_x, pos_y, fillcolour=fill)
-        pos_x += BOX_SIZE + BOX_MARGIN
-        date += datetime.timedelta(weeks=1)
+    for week_number in range(START_WEEK, END_WEEK + 1):
+        week_index = week_number - 1
+        pos_x = X_MARGIN + week_index * (BOX_SIZE + BOX_MARGIN)
+        draw_square(ctx, pos_x, pos_y)
 
 def draw_key_item(ctx, pos_x, pos_y, desc, colour):
     draw_square(ctx, pos_x, pos_y, fillcolour=colour)
@@ -158,7 +163,7 @@ def draw_grid(ctx, date):
 
         # Increment y position and current date by 1 row/year
         pos_y += BOX_SIZE + BOX_MARGIN
-        date += datetime.timedelta(weeks=52)
+        date += datetime.timedelta(weeks=weeks_in_year(date.year))
 
 def gen_calendar(start_date, title, filename):
     if len(title) > MAX_TITLE_SIZE:
