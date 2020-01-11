@@ -147,7 +147,7 @@ def draw_grid(ctx, date):
     for i in range(NUM_ROWS):
         # Generate string for current date
         ctx.set_source_rgb(0, 0, 0)
-        date_str = date.strftime('%d %b, %Y')
+        date_str = (date + datetime.timedelta(weeks=1)).strftime('%Y')
         w, h = text_size(ctx, date_str)
 
         # Draw it in front of the current row
