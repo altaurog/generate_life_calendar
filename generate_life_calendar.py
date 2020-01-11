@@ -126,9 +126,6 @@ def draw_grid(ctx, date):
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
         cairo.FONT_WEIGHT_NORMAL)
 
-    pos_x = draw_key_item(ctx, pos_x, pos_y, KEY_BIRTHDAY_DESC, BIRTHDAY_COLOUR)
-    draw_key_item(ctx, pos_x, pos_y, KEY_NEWYEAR_DESC, NEWYEAR_COLOUR)
-
     # draw week numbers above top row
     ctx.set_font_size(TINYFONT_SIZE)
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
