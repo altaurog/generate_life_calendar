@@ -72,13 +72,6 @@ def text_size(ctx, text):
     _, _, width, height, _, _ = ctx.text_extents(text)
     return width, height
 
-def is_current_week(now, month, day):
-    end = now + datetime.timedelta(weeks=1)
-    date1 = datetime.datetime(now.year, month, day)
-    date2 = datetime.datetime(now.year + 1, month, day)
-
-    return (now <= date1 < end) or (now <= date2 < end)
-
 def get_week_number(date):
     return date.isocalendar()[1]
 
@@ -101,17 +94,6 @@ def draw_row(ctx, pos_y, start_date, date):
         week_index = week_number - 1
         pos_x = X_MARGIN + week_index * (BOX_SIZE + BOX_MARGIN)
         draw_square(ctx, pos_x, pos_y)
-
-def draw_key_item(ctx, pos_x, pos_y, desc, colour):
-    draw_square(ctx, pos_x, pos_y, fillcolour=colour)
-    pos_x += BOX_SIZE + (BOX_SIZE / 2)
-
-    ctx.set_source_rgb(0, 0, 0)
-    w, h = text_size(ctx, desc)
-    ctx.move_to(pos_x, pos_y + (BOX_SIZE / 2) + (h / 2))
-    ctx.show_text(desc)
-
-    return pos_x + w + (BOX_SIZE * 2)
 
 def draw_grid(ctx, date):
     """
