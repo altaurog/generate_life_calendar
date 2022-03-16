@@ -1,4 +1,5 @@
 import datetime
+import itertools
 import argparse
 import sys
 import os
@@ -103,18 +104,25 @@ def draw_row_label(ctx, start_date, date):
         pos_y + ((BOX_SIZE / 2) + (h / 2)))
     ctx.show_text(date_str)
 
+def get_row_boxes(start_date, date):
+    """
+    get boxes to draw for row
+    """
+    start = 0 if date.year != start_date.year else get_week_number(start_date)
+    end = weeks_in_year(date.year)
+    for week in range(start, end):
+        d = datetime.date(date.year, 1, 1) + datetime.timedelta(weeks=week)
+        yield week, d.month % 2
+
 def draw_row(ctx, start_date, date):
     """
     Draws a row of squares, one per week of the year
     If start_date and date are in the same year, then skip squares for weeks before start_date.
     Draw a 53rd square for years with 53 weeks.
     """
-
-    START_WEEK = 0 if date.year != start_date.year else get_week_number(start_date)
-    END_WEEK = weeks_in_year(date.year)
-
-    for week_number in range(START_WEEK, END_WEEK):
-        draw_square(ctx, date.year - start_date.year, week_number)
+    for week, shade in get_row_boxes(start_date, date):
+        color = (0.9, 0.9, 0.9) if shade else (1, 1, 1)
+        draw_square(ctx, date.year - start_date.year, week, color)
 
 def draw_grid(ctx, date):
     """
