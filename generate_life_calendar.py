@@ -53,11 +53,18 @@ def parse_date(date):
 
     raise ValueError("Incorrect date format: must be dd-mm-yyyy or dd/mm/yyyy")
 
-def draw_square(ctx, pos_x, pos_y, fillcolour=(1, 1, 1)):
+def get_box_pos(year, week):
     """
-    Draws a square at pos_x,pos_y
+    convert year-week into x-y coordinates
     """
+    offset = BOX_SIZE + BOX_MARGIN
+    return X_MARGIN + week * offset, Y_MARGIN + year * offset
 
+def draw_square(ctx, year, week, fillcolour=(1, 1, 1)):
+    """
+    Draws a square for year, week
+    """
+    pos_x, pos_y = get_box_pos(year, week)
     ctx.set_line_width(BOX_LINE_WIDTH)
     ctx.set_source_rgb(0, 0, 0)
     ctx.move_to(pos_x, pos_y)
@@ -73,27 +80,41 @@ def text_size(ctx, text):
     return width, height
 
 def get_week_number(date):
-    return date.isocalendar()[1]
+    return date.isocalendar()[1] - 1
 
 def weeks_in_year(year):
     def p(year):
         return (year + math.floor(year/4.) - math.floor(year/100.) + math.floor(year/400.)) % 7
     return 53 if (p(year) == 4 or p(year - 1) == 3) else 52
 
-def draw_row(ctx, pos_y, start_date, date):
+def draw_row_label(ctx, start_date, date):
     """
-    Draws a row of squares, one per week of the year, starting at pos_y.
+    draw label for the row
+    """
+    year = date.year - start_date.year
+    pos_x, pos_y = get_box_pos(year, 0)
+    # Generate string for current date
+    ctx.set_source_rgb(0, 0, 0)
+    date_str = date.strftime('%Y')
+    w, h = text_size(ctx, date_str)
+
+    # Draw it in front of the current row
+    ctx.move_to(pos_x - w - BOX_SIZE,
+        pos_y + ((BOX_SIZE / 2) + (h / 2)))
+    ctx.show_text(date_str)
+
+def draw_row(ctx, start_date, date):
+    """
+    Draws a row of squares, one per week of the year
     If start_date and date are in the same year, then skip squares for weeks before start_date.
     Draw a 53rd square for years with 53 weeks.
     """
 
-    START_WEEK = 1 if date.year != start_date.year else get_week_number(start_date)
+    START_WEEK = 0 if date.year != start_date.year else get_week_number(start_date)
     END_WEEK = weeks_in_year(date.year)
 
-    for week_number in range(START_WEEK, END_WEEK + 1):
-        week_index = week_number - 1
-        pos_x = X_MARGIN + week_index * (BOX_SIZE + BOX_MARGIN)
-        draw_square(ctx, pos_x, pos_y)
+    for week_number in range(START_WEEK, END_WEEK):
+        draw_square(ctx, date.year - start_date.year, week_number)
 
 def draw_grid(ctx, date):
     """
@@ -127,21 +148,11 @@ def draw_grid(ctx, date):
         cairo.FONT_WEIGHT_NORMAL)
 
     for i in range(NUM_ROWS):
-        # Generate string for current date
-        ctx.set_source_rgb(0, 0, 0)
-        date_str = (date + datetime.timedelta(weeks=1)).strftime('%Y')
-        w, h = text_size(ctx, date_str)
 
-        # Draw it in front of the current row
-        ctx.move_to(X_MARGIN - w - BOX_SIZE,
-            pos_y + ((BOX_SIZE / 2) + (h / 2)))
-        ctx.show_text(date_str)
-
-        # Draw the current row
-        draw_row(ctx, pos_y, start_date, date)
+        draw_row_label(ctx, start_date, date)
+        draw_row(ctx, start_date, date)
 
         # Increment y position and current date by 1 row/year
-        pos_y += BOX_SIZE + BOX_MARGIN
         date += datetime.timedelta(weeks=weeks_in_year(date.year))
 
 def gen_calendar(start_date, title, filename):
