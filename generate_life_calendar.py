@@ -193,12 +193,13 @@ def gen_calendar(start_date, title, filename):
     draw_grid(ctx, date)
     ctx.show_page()
 
-def main():
+
+def parse_args():
     parser = argparse.ArgumentParser(description='\nGenerate a personalized "Life '
         ' Calendar", inspired by the calendar with the same name from the '
         'waitbutwhy.com store')
 
-    parser.add_argument(type=str, dest='date', help='starting date; your birthday,'
+    parser.add_argument(type=parse_date, dest='date', help='starting date; your birthday,'
         'in either dd/mm/yyyy or dd-mm-yyyy format')
 
     parser.add_argument('-f', '--filename', type=str, dest='filename',
@@ -208,49 +209,14 @@ def main():
         help='Calendar title text (default is "%s")' % DEFAULT_TITLE,
         default=DEFAULT_TITLE)
 
-    parser.add_argument('-e', '--end', type=str, dest='enddate',
-        help='end date; If this is set, then a calendar with a different start date'
-        ' will be generated for each day between the starting date and this date')
+    return parser.parse_args()
 
-    args = parser.parse_args()
 
-    try:
-        start_date = parse_date(args.date)
-    except Exception as e:
-        print("Error: %s" % e)
-        return
+def main():
+    args = parse_args()
+    gen_calendar(args.date, args.title, args.filename)
+    print('Created %s' % args.filename)
 
-    doc_name = '%s.pdf' % (os.path.splitext(args.filename)[0])
-
-    if args.enddate:
-        start = start_date
-
-        try:
-            end = parse_date(args.enddate)
-        except Exception as e:
-            print("Error: %s" % e)
-            return
-
-        while start <= end:
-            date_str = start.strftime('%d-%m-%Y')
-            name = "life_calendar_%s.pdf" % date_str
-
-            try:
-                gen_calendar(start, args.title, name)
-            except Exception as e:
-                print("Error: %s" % e)
-                return
-
-            start += datetime.timedelta(days=1)
-
-    else:
-        try:
-            gen_calendar(start_date, args.title, doc_name)
-        except Exception as e:
-            print("Error: %s" % e)
-            return
-
-        print('Created %s' % doc_name)
 
 if __name__ == "__main__":
     main()
