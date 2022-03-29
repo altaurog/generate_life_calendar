@@ -21,7 +21,6 @@ BIGFONT_SIZE = 40
 SMALLFONT_SIZE = 16
 TINYFONT_SIZE = 14
 
-MAX_TITLE_SIZE = 30
 DEFAULT_TITLE = "LIFE CALENDAR"
 
 NUM_ROWS = 90
@@ -61,25 +60,6 @@ def get_box_pos(year, week):
     offset = BOX_SIZE + BOX_MARGIN
     return X_MARGIN + week * offset, Y_MARGIN + year * offset
 
-def draw_square(ctx, year, week, fillcolour=(1, 1, 1)):
-    """
-    Draws a square for year, week
-    """
-    pos_x, pos_y = get_box_pos(year, week)
-    ctx.set_line_width(BOX_LINE_WIDTH)
-    ctx.set_source_rgb(0, 0, 0)
-    ctx.move_to(pos_x, pos_y)
-
-    ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
-    ctx.stroke_preserve()
-
-    ctx.set_source_rgb(*fillcolour)
-    ctx.fill()
-
-def text_size(ctx, text):
-    _, _, width, height, _, _ = ctx.text_extents(text)
-    return width, height
-
 def get_week_number(date):
     return date.isocalendar()[1] - 1
 
@@ -88,110 +68,127 @@ def weeks_in_year(year):
         return (year + math.floor(year/4.) - math.floor(year/100.) + math.floor(year/400.)) % 7
     return 53 if (p(year) == 4 or p(year - 1) == 3) else 52
 
-def draw_row_label(ctx, start_date, date):
-    """
-    draw label for the row
-    """
-    year = date.year - start_date.year
-    pos_x, pos_y = get_box_pos(year, 0)
-    # Generate string for current date
-    ctx.set_source_rgb(0, 0, 0)
-    date_str = date.strftime('%Y')
-    w, h = text_size(ctx, date_str)
+class Calendar:
 
-    # Draw it in front of the current row
-    ctx.move_to(pos_x - w - BOX_SIZE,
-        pos_y + ((BOX_SIZE / 2) + (h / 2)))
-    ctx.show_text(date_str)
+    def __init__(self, start_date, title):
+        # Back up to the last monday
+        self.start_date = start_date - datetime.timedelta(start_date.weekday())
+        self.title = title
 
-def get_row_boxes(start_date, date):
-    """
-    get boxes to draw for row
-    """
-    start = 0 if date.year != start_date.year else get_week_number(start_date)
-    end = weeks_in_year(date.year)
-    for week in range(start, end):
-        d = datetime.date(date.year, 1, 1) + datetime.timedelta(weeks=week)
-        yield week, d.month % 2
+    def draw_square(self, year, week, fillcolour=(1, 1, 1)):
+        """
+        Draws a square for year, week
+        """
+        pos_x, pos_y = get_box_pos(year, week)
+        self.ctx.set_line_width(BOX_LINE_WIDTH)
+        self.ctx.set_source_rgb(0, 0, 0)
+        self.ctx.move_to(pos_x, pos_y)
 
-def draw_row(ctx, start_date, date):
-    """
-    Draws a row of squares, one per week of the year
-    If start_date and date are in the same year, then skip squares for weeks before start_date.
-    Draw a 53rd square for years with 53 weeks.
-    """
-    for week, shade in get_row_boxes(start_date, date):
-        color = (0.9, 0.9, 0.9) if shade else (1, 1, 1)
-        draw_square(ctx, date.year - start_date.year, week, color)
+        self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
+        self.ctx.stroke_preserve()
 
-def draw_grid(ctx, date):
-    """
-    Draws the whole grid of 52x90 squares
-    """
-    start_date = date
-    pos_x = X_MARGIN / 4
-    pos_y = pos_x
+        self.ctx.set_source_rgb(*fillcolour)
+        self.ctx.fill()
 
-    # Draw the key for box colours
-    ctx.set_font_size(TINYFONT_SIZE)
-    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
-        cairo.FONT_WEIGHT_NORMAL)
+    def text_size(self, text):
+        _, _, width, height, _, _ = self.ctx.text_extents(text)
+        return width, height
 
-    # draw week numbers above top row
-    ctx.set_font_size(TINYFONT_SIZE)
-    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
-        cairo.FONT_WEIGHT_NORMAL)
+    def draw_row_label(self, date):
+        """
+        draw label for the row
+        """
+        year = date.year - self.start_date.year
+        pos_x, pos_y = get_box_pos(year, 0)
+        # Generate string for current date
+        self.ctx.set_source_rgb(0, 0, 0)
+        date_str = date.strftime('%Y')
+        w, h = self.text_size(date_str)
 
-    pos_x = X_MARGIN
-    pos_y = Y_MARGIN
-    for i in range(NUM_COLUMNS):
-        text = str(i + 1)
-        w, h = text_size(ctx, text)
-        ctx.move_to(pos_x + (BOX_SIZE / 2) - (w / 2), pos_y - BOX_SIZE)
-        ctx.show_text(text)
-        pos_x += BOX_SIZE + BOX_MARGIN
+        # Draw it in front of the current row
+        self.ctx.move_to(pos_x - w - BOX_SIZE,
+            pos_y + ((BOX_SIZE / 2) + (h / 2)))
+        self.ctx.show_text(date_str)
 
-    ctx.set_font_size(TINYFONT_SIZE)
-    ctx.select_font_face(FONT, cairo.FONT_SLANT_ITALIC,
-        cairo.FONT_WEIGHT_NORMAL)
+    def get_row_boxes(self, date):
+        """
+        get boxes to draw for row
+        """
+        start = 0 if date.year != self.start_date.year else get_week_number(self.start_date)
+        end = weeks_in_year(date.year)
+        for week in range(start, end):
+            d = datetime.date(date.year, 1, 1) + datetime.timedelta(weeks=week)
+            yield week, d.month % 2
 
-    for i in range(NUM_ROWS):
+    def draw_row(self, date):
+        """
+        Draws a row of squares, one per week of the year
+        If start_date and date are in the same year, then skip squares for weeks before start_date.
+        Draw a 53rd square for years with 53 weeks.
+        """
+        for week, shade in self.get_row_boxes(date):
+            color = (0.9, 0.9, 0.9) if shade else (1, 1, 1)
+            self.draw_square(date.year - self.start_date.year, week, color)
 
-        draw_row_label(ctx, start_date, date)
-        draw_row(ctx, start_date, date)
+    def draw_grid(self):
+        """
+        Draws the whole grid of 52x90 squares
+        """
+        date = self.start_date
+        pos_x = X_MARGIN / 4
+        pos_y = pos_x
 
-        # Increment y position and current date by 1 row/year
-        date += datetime.timedelta(weeks=weeks_in_year(date.year))
+        # Draw the key for box colours
+        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
+            cairo.FONT_WEIGHT_NORMAL)
 
-def gen_calendar(start_date, title, filename):
-    if len(title) > MAX_TITLE_SIZE:
-        raise ValueError("Title can't be longer than %d characters"
-            % MAX_TITLE_SIZE)
+        # draw week numbers above top row
+        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
+            cairo.FONT_WEIGHT_NORMAL)
 
-    # Fill background with white
-    surface = cairo.PDFSurface (filename, DOC_WIDTH, DOC_HEIGHT)
-    ctx = cairo.Context(surface)
+        pos_x = X_MARGIN
+        pos_y = Y_MARGIN
+        for i in range(NUM_COLUMNS):
+            text = str(i + 1)
+            w, h = self.text_size(text)
+            self.ctx.move_to(pos_x + (BOX_SIZE / 2) - (w / 2), pos_y - BOX_SIZE)
+            self.ctx.show_text(text)
+            pos_x += BOX_SIZE + BOX_MARGIN
 
-    ctx.set_source_rgb(1, 1, 1)
-    ctx.rectangle(0, 0, DOC_WIDTH, DOC_HEIGHT)
-    ctx.fill()
+        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.select_font_face(FONT, cairo.FONT_SLANT_ITALIC,
+            cairo.FONT_WEIGHT_NORMAL)
 
-    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
-        cairo.FONT_WEIGHT_BOLD)
-    ctx.set_source_rgb(0, 0, 0)
-    ctx.set_font_size(BIGFONT_SIZE)
-    w, h = text_size(ctx, title)
-    ctx.move_to((DOC_WIDTH / 2) - (w / 2), (Y_MARGIN / 2) - (h / 2))
-    ctx.show_text(title)
+        for i in range(NUM_ROWS):
 
-    # Back up to the last monday
-    date = start_date
-    while date.weekday() != 0:
-        date -= datetime.timedelta(days=1)
+            self.draw_row_label(date)
+            self.draw_row(date)
 
-    # Draw 52x90 grid of squares
-    draw_grid(ctx, date)
-    ctx.show_page()
+            # Increment y position and current date by 1 row/year
+            date += datetime.timedelta(weeks=weeks_in_year(date.year))
+
+    def render(self, filename):
+        # Fill background with white
+        surface = cairo.PDFSurface (filename, DOC_WIDTH, DOC_HEIGHT)
+        self.ctx = cairo.Context(surface)
+
+        self.ctx.set_source_rgb(1, 1, 1)
+        self.ctx.rectangle(0, 0, DOC_WIDTH, DOC_HEIGHT)
+        self.ctx.fill()
+
+        self.ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL,
+            cairo.FONT_WEIGHT_BOLD)
+        self.ctx.set_source_rgb(0, 0, 0)
+        self.ctx.set_font_size(BIGFONT_SIZE)
+        w, h = self.text_size(self.title)
+        self.ctx.move_to((DOC_WIDTH / 2) - (w / 2), (Y_MARGIN / 2) - (h / 2))
+        self.ctx.show_text(self.title)
+
+        # Draw 52x90 grid of squares
+        self.draw_grid()
+        self.ctx.show_page()
 
 
 def parse_args():
@@ -214,7 +211,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    gen_calendar(args.date, args.title, args.filename)
+    calendar = Calendar(args.date, args.title)
+    calendar.render(args.filename)
     print('Created %s' % args.filename)
 
 
