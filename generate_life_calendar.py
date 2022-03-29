@@ -1,20 +1,13 @@
-import datetime
-import itertools
 import argparse
-import sys
-import os
+import itertools
+
+from datetime import datetime, timedelta
+
 import cairo
-import math
 
 DOC_WIDTH = 1872   # 26 inches
 DOC_HEIGHT = 2880  # 40 inches
 DOC_NAME = "life_calendar.pdf"
-
-KEY_NEWYEAR_DESC = "First week of the new year"
-KEY_BIRTHDAY_DESC = "Week of your birthday"
-
-XAXIS_DESC = "Weeks of the year"
-YAXIS_DESC = "Years of your life"
 
 FONT = "Brocha"
 BIGFONT_SIZE = 40
@@ -33,19 +26,13 @@ BOX_LINE_WIDTH = 3
 BOX_SIZE = ((DOC_HEIGHT - (Y_MARGIN + 36)) / NUM_ROWS) - BOX_MARGIN
 X_MARGIN = (DOC_WIDTH - ((BOX_SIZE + BOX_MARGIN) * NUM_COLUMNS)) / 2
 
-BIRTHDAY_COLOUR = (0.5, 0.5, 0.5)
-NEWYEAR_COLOUR = (0.8, 0.8, 0.8)
-
-ARROW_HEAD_LENGTH = 36
-ARROW_HEAD_WIDTH = 8
-
 def parse_date(date):
     formats = ['%d/%m/%Y', '%d-%m-%Y']
     stripped = date.strip()
 
     for f in formats:
         try:
-            ret = datetime.datetime.strptime(date, f)
+            ret = datetime.strptime(date, f)
         except:
             continue
         else:
@@ -62,8 +49,8 @@ class Calendar:
 
     def __init__(self, start_date, title):
         # Start on Sunday
-        self.start_date = start_date - datetime.timedelta(start_date.weekday() - 1)
-        self.end_date = self.start_date.replace(year=self.start_date.year + 90)
+        self.start_date = start_date - timedelta(start_date.weekday() - 1)
+        self.end_date = self.start_date.replace(year=self.start_date.year + NUM_ROWS)
         self.title = title
 
     def weeks(self):
@@ -79,7 +66,7 @@ class Calendar:
         isodate = date.isocalendar()
         year = isodate.year - self.start_date.year
         week = isodate.week - 1
-        offset = (date - datetime.datetime(isodate.year, 1, 1)).days % 7
+        offset = (date - datetime(isodate.year, 1, 1)).days % 7
         pos_x = X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) + offset * BOX_SIZE / 7
         pos_y = Y_MARGIN + year * (BOX_SIZE + BOX_MARGIN)
         return pos_x, pos_y
