@@ -53,13 +53,6 @@ def parse_date(date):
 
     raise ValueError("Incorrect date format: must be dd-mm-yyyy or dd/mm/yyyy")
 
-def get_box_pos(year, week):
-    """
-    convert year-week into x-y coordinates
-    """
-    offset = BOX_SIZE + BOX_MARGIN
-    return X_MARGIN + week * offset, Y_MARGIN + year * offset
-
 def weeks(start_date):
     for c in itertools.count():
         try:
@@ -82,14 +75,23 @@ class Calendar:
             weeks(self.start_date),
         )
 
-    def draw_square(self, date, fillcolour=(1, 1, 1)):
+    def get_box_pos(self, date):
         """
-        Draws a square for year, week
+        convert year-week into x-y coordinates
         """
         isodate = date.isocalendar()
         year = isodate.year - self.start_date.year
         week = isodate.week - 1
-        pos_x, pos_y = get_box_pos(year, week)
+        offset = (date - datetime.datetime(isodate.year, 1, 1)).days % 7
+        pos_x = X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) + offset * BOX_SIZE / 7
+        pos_y = Y_MARGIN + year * (BOX_SIZE + BOX_MARGIN)
+        return pos_x, pos_y
+
+    def draw_square(self, date, fillcolour=(1, 1, 1)):
+        """
+        Draws a square for year, week
+        """
+        pos_x, pos_y = self.get_box_pos(date)
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.move_to(pos_x, pos_y)
