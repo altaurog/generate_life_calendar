@@ -55,10 +55,7 @@ def parse_date(date):
 
 def weeks(start_date):
     for c in itertools.count():
-        try:
-            yield start_date + datetime.timedelta(c * 7)
-        except Exception as exc:
-            raise RuntimeError(f'{exc} at {c}')
+        yield start_date + timedelta(c * 7)
 
 
 class Calendar:
