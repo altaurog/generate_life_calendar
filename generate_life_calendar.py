@@ -54,6 +54,7 @@ class Calendar:
 
     def __init__(self, config):
         # Start on Monday (Monday is 0, Sunday is 6)
+        self.num_years = config.num_years
         self.start_date = config.start_date - timedelta(config.start_date.weekday())
         self.end_date = self.start_date.replace(year=self.start_date.year + config.num_years)
         self.title = config.title
@@ -145,6 +146,19 @@ class Calendar:
                 self.ctx.set_source_rgb(0.85, 0.85, 0.85)
                 self.ctx.rectangle(x, y, width, height)
                 self.ctx.fill()
+
+    def label_years(self):
+        self.ctx.set_source_rgb(0, 0, 0)
+        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        for n in range(self.num_years + 1):
+            self.center_text(
+                X_MARGIN / 3,
+                y_position(n),
+                X_MARGIN / 2,
+                BOX_SIZE,
+                str(n + self.start_date.year),
+            )
 
     def render(self, filename):
         # Fill background with white
