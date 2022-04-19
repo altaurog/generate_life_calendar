@@ -1,6 +1,5 @@
 import argparse
 import itertools
-
 from datetime import datetime, timedelta
 
 import cairo
@@ -47,35 +46,40 @@ def weeks(start_date):
 
 class Calendar:
 
-    def __init__(self, start_date, title):
-        # Start on Sunday
-        self.start_date = start_date - timedelta(start_date.weekday() - 1)
-        self.end_date = self.start_date.replace(year=self.start_date.year + NUM_ROWS)
-        self.title = title
+    def __init__(self, config):
+        # Start on Monday (Monday is 0, Sunday is 6)
+        self.start_date = config.start_date - timedelta(config.start_date.weekday())
+        self.end_date = self.start_date.replace(year=self.start_date.year + config.num_years)
+        self.title = config.title
 
-    def weeks(self):
-        yield from itertools.takewhile(
-            lambda date: date < self.end_date,
-            weeks(self.start_date),
-        )
+    def bounded_weeks(self, week_iter):
+        predicate = lambda date: date < self.end_date
+        return itertools.takewhile(predicate, week_iter)
 
-    def get_box_pos(self, date):
-        """
-        convert year-week into x-y coordinates
-        """
+    def positioned_weeks(self, week_iter):
+        return map(self.position, week_iter)
+
+    def position(self, date):
         isodate = date.isocalendar()
         year = isodate.year - self.start_date.year
         week = isodate.week - 1
-        offset = (date - datetime(isodate.year, 1, 1)).days % 7
-        pos_x = X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) + offset * BOX_SIZE / 7
-        pos_y = Y_MARGIN + year * (BOX_SIZE + BOX_MARGIN)
-        return pos_x, pos_y
+        offset = datetime(isodate.year, 1, 1).weekday()
+        return {
+            "date": date,
+            "isodate": isodate,
+            "year": year,
+            "week": week,
+            "offset": offset,
+            "pos_x": X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) - offset * BOX_SIZE / 7,
+            "pos_y": Y_MARGIN + year * (BOX_SIZE + BOX_MARGIN),
+        }
 
-    def draw_square(self, date, fillcolour=(1, 1, 1)):
+    def draw_square(self, week, fillcolour=(1, 1, 1)):
         """
         Draws a square for year, week
         """
-        pos_x, pos_y = self.get_box_pos(date)
+        pos_x = week["pos_x"]
+        pos_y = week["pos_y"]
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.move_to(pos_x, pos_y)
@@ -92,7 +96,7 @@ class Calendar:
         """
         self.ctx.set_font_size(TINYFONT_SIZE)
         self.ctx.select_font_face(FONT, cairo.FONT_SLANT_ITALIC, cairo.FONT_WEIGHT_NORMAL)
-        for d in self.weeks():
+        for d in self.positioned_weeks(self.bounded_weeks(weeks(self.start_date))):
             self.draw_square(d)
 
 
@@ -126,11 +130,15 @@ def parse_args():
         ' Calendar", inspired by the calendar with the same name from the '
         'waitbutwhy.com store')
 
-    parser.add_argument(type=parse_date, dest='date', help='starting date; your birthday,'
+    parser.add_argument(type=parse_date, dest='start_date', help='starting date; your birthday,'
         'in either dd/mm/yyyy or dd-mm-yyyy format')
 
     parser.add_argument('-f', '--filename', type=str, dest='filename',
         help='output filename', default=DOC_NAME)
+
+    parser.add_argument('-y', '--num-years', type=int, dest='num_years',
+        help='number of years (default is "%d")' % NUM_ROWS,
+        default=NUM_ROWS)
 
     parser.add_argument('-t', '--title', type=str, dest='title',
         help='Calendar title text (default is "%s")' % DEFAULT_TITLE,
@@ -141,7 +149,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    calendar = Calendar(args.date, args.title)
+    calendar = Calendar(args)
     calendar.render(args.filename)
     print('Created %s' % args.filename)
 
