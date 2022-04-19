@@ -44,6 +44,12 @@ def weeks(start_date):
         yield start_date + timedelta(c * 7)
 
 
+def x_position(week, day):
+    return X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) + day * BOX_SIZE / 7
+
+def y_position(year):
+    return Y_MARGIN + year * (BOX_SIZE + BOX_MARGIN)
+
 class Calendar:
 
     def __init__(self, config):
@@ -73,16 +79,16 @@ class Calendar:
             "year": year,
             "week": week,
             "offset": offset,
-            "pos_x": X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) - offset * BOX_SIZE / 7,
-            "pos_y": Y_MARGIN + year * (BOX_SIZE + BOX_MARGIN),
+            "pos_x": x_position(week, -offset),
+            "pos_y": y_position(year),
         }
 
-    def draw_square(self, week, fillcolour=(1, 1, 1)):
+    def draw_square(self, d, fillcolour=(1, 1, 1)):
         """
         Draws a square for year, week
         """
-        pos_x = week["pos_x"]
-        pos_y = week["pos_y"]
+        pos_x = d["pos_x"]
+        pos_y = d["pos_y"]
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.move_to(pos_x, pos_y)
@@ -102,6 +108,38 @@ class Calendar:
         for d in self.positioned_weeks(self.bounded_weeks(weeks(self.start_date))):
             self.draw_square(d)
 
+    def draw_months(self):
+        months = [
+            (0, 31, "Jan"),
+            (32, 59, "Feb"),
+            (60, 90, "Mar"),
+            (91, 120, "Apr"),
+            (121, 151, "May"),
+            (152, 181, "Jun"),
+            (182, 212, "Jul"),
+            (213, 243, "Aug"),
+            (244, 273, "Sep"),
+            (274, 304, "Oct"),
+            (305, 334, "Nov"),
+            (335, 365, "Dec"),
+            (365, 366, ""),
+        ]
+        for i, (start, end, label) in enumerate(months):
+            x = x_position(*divmod(start, 7))
+            y = y_position(0) - 2 * BOX_MARGIN
+            width = x_position(*divmod(end, 7)) - x
+            self.ctx.set_source_rgb(0, 0, 0)
+            self.ctx.set_font_size(TINYFONT_SIZE)
+            w, h = self.text_size(label)
+            self.ctx.move_to(x + (width / 2) - (w / 2), y - BOX_MARGIN - h)
+            self.ctx.show_text(label)
+            if not i % 2:
+                height = y_position(91) - y + 3 * BOX_MARGIN
+                self.ctx.set_line_width(1)
+                self.ctx.set_source_rgb(0.85, 0.85, 0.85)
+                self.ctx.rectangle(x, y, width, height)
+                self.ctx.fill()
+
 
     def render(self, filename):
         # Fill background with white
@@ -120,6 +158,7 @@ class Calendar:
         self.ctx.move_to((DOC_WIDTH / 2) - (w / 2), (Y_MARGIN / 2) - (h / 2))
         self.ctx.show_text(self.title)
 
+        self.draw_months()
         self.draw_grid()
         self.ctx.show_page()
 
