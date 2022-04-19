@@ -21,7 +21,7 @@ NUM_COLUMNS = 53  # Some years have 53 weeks.
 Y_MARGIN = 144
 BOX_MARGIN = 6
 
-BOX_LINE_WIDTH = 3
+BOX_LINE_WIDTH = 1.5
 BOX_SIZE = ((DOC_HEIGHT - (Y_MARGIN + 36)) / NUM_ROWS) - BOX_MARGIN
 X_MARGIN = (DOC_WIDTH - ((BOX_SIZE + BOX_MARGIN) * NUM_COLUMNS)) / 2
 
@@ -91,11 +91,11 @@ class Calendar:
         pos_x = d["pos_x"]
         pos_y = d["pos_y"]
         self.ctx.set_line_width(BOX_LINE_WIDTH)
-        self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
-        self.ctx.stroke_preserve()
-        self.ctx.set_source_rgb(*fillcolour)
-        self.ctx.fill()
+        self.ctx.set_source_rgba(*fillcolour, 0.75)
+        self.ctx.fill_preserve()
+        self.ctx.set_source_rgba(0, 0, 0, 1)
+        self.ctx.stroke()
 
     def center_text(self, pos_x, pos_y, box_width, box_height, label):
         text_width, text_height = self.text_size(label)
