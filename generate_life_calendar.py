@@ -64,6 +64,9 @@ class Calendar:
         year = isodate.year - self.start_date.year
         week = isodate.week - 1
         offset = datetime(isodate.year, 1, 1).weekday()
+        if offset > 3:
+            # isocalendar counts first days towards previous year
+            week += 1
         return {
             "date": date,
             "isodate": isodate,
