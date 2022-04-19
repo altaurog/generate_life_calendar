@@ -132,6 +132,7 @@ class Calendar:
             width = x_position(*divmod(end, 7)) - x
             self.ctx.set_source_rgb(0, 0, 0)
             self.ctx.set_font_size(TINYFONT_SIZE)
+            self.ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
             w, h = self.text_size(label)
             self.ctx.move_to(x + (width / 2) - (w / 2), y - BOX_MARGIN - h)
             self.ctx.show_text(label)
