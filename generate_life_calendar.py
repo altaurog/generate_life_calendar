@@ -99,6 +99,11 @@ class Calendar:
         self.ctx.set_source_rgb(*fillcolour)
         self.ctx.fill()
 
+    def center_text(self, pos_x, pos_y, box_width, box_height, label):
+        text_width, text_height = self.text_size(label)
+        self.ctx.move_to(pos_x + (box_width - text_width) / 2, pos_y + (box_height + text_height) / 2)
+        self.ctx.show_text(label)
+
     def draw_grid(self):
         """
         Draws the whole grid of 52x90 squares
@@ -133,16 +138,13 @@ class Calendar:
             self.ctx.set_source_rgb(0, 0, 0)
             self.ctx.set_font_size(TINYFONT_SIZE)
             self.ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            w, h = self.text_size(label)
-            self.ctx.move_to(x + (width / 2) - (w / 2), y - BOX_MARGIN - h)
-            self.ctx.show_text(label)
+            self.center_text(x, y - BOX_SIZE - BOX_MARGIN, width, BOX_SIZE, label)
             if not i % 2:
                 height = y_position(91) - y + 3 * BOX_MARGIN
                 self.ctx.set_line_width(1)
                 self.ctx.set_source_rgb(0.85, 0.85, 0.85)
                 self.ctx.rectangle(x, y, width, height)
                 self.ctx.fill()
-
 
     def render(self, filename):
         # Fill background with white
@@ -157,11 +159,10 @@ class Calendar:
             cairo.FONT_WEIGHT_BOLD)
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.set_font_size(BIGFONT_SIZE)
-        w, h = self.text_size(self.title)
-        self.ctx.move_to((DOC_WIDTH / 2) - (w / 2), (Y_MARGIN / 2) - (h / 2))
-        self.ctx.show_text(self.title)
+        self.center_text(0, 0, DOC_WIDTH, Y_MARGIN, self.title)
 
         self.draw_months()
+        self.label_years()
         self.draw_grid()
         self.ctx.show_page()
 
