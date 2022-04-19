@@ -92,11 +92,8 @@ class Calendar:
         pos_y = d["pos_y"]
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.set_source_rgb(0, 0, 0)
-        self.ctx.move_to(pos_x, pos_y)
-
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
         self.ctx.stroke_preserve()
-
         self.ctx.set_source_rgb(*fillcolour)
         self.ctx.fill()
 
