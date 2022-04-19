@@ -110,21 +110,23 @@ class Calendar:
 
     def draw_months(self):
         months = [
-            (0, 31, "Jan"),
-            (32, 59, "Feb"),
-            (60, 90, "Mar"),
-            (91, 120, "Apr"),
-            (121, 151, "May"),
-            (152, 181, "Jun"),
-            (182, 212, "Jul"),
-            (213, 243, "Aug"),
-            (244, 273, "Sep"),
-            (274, 304, "Oct"),
-            (305, 334, "Nov"),
-            (335, 365, "Dec"),
-            (365, 366, ""),
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
         ]
-        for i, (start, end, label) in enumerate(months):
+        ref = datetime(2000, 1, 1)
+        for i, label in enumerate(months):
+            start = (datetime(2000, i + 1, 1) - ref).days
+            end = (datetime(2000 + (i + 1) // 12, (i + 1) % 12 + 1, 1) - ref).days - 1
             x = x_position(*divmod(start, 7))
             y = y_position(0) - 2 * BOX_MARGIN
             width = x_position(*divmod(end, 7)) - x
