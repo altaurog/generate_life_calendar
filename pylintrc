@@ -1,0 +1,6 @@
+[MASTER]
+
+extension-pkg-whitelist=cairo
+
+[DESIGN]
+max-args=6

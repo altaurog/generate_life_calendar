@@ -1,4 +1,9 @@
+"""
+Produce a poster-size pdf representing a human life-span
+as 90 rows of 52 or 53 weeks, one box for each week
+"""
 import argparse
+import functools
 import itertools
 from datetime import datetime, timedelta
 
@@ -27,34 +32,43 @@ X_MARGIN = (DOC_WIDTH - ((BOX_SIZE + BOX_MARGIN) * NUM_COLUMNS)) / 2
 
 
 def parse_date(date):
-    formats = ["%d/%m/%Y", "%d-%m-%Y"]
-    stripped = date.strip()
-
-    for f in formats:
+    "parse a string into a date"
+    for fmt in ["%d/%m/%Y", "%d-%m-%Y"]:
         try:
-            ret = datetime.strptime(date, f)
-        except:
+            return datetime.strptime(date.strip(), fmt)
+        except ValueError:
             continue
-        else:
-            return ret
-
     raise ValueError("Incorrect date format: must be dd-mm-yyyy or dd/mm/yyyy")
 
 
 def weeks(start_date):
-    for c in itertools.count():
-        yield start_date + timedelta(c * 7)
+    "generate sequence of week start dates, starting with specified date"
+    for num in itertools.count():
+        yield start_date + timedelta(num * 7)
 
 
 def x_position(week, day):
+    "get horizontal position on the page for given week and day"
     return X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) + day * BOX_SIZE / 7
 
 
-def y_position(year):
-    return Y_MARGIN + year * (BOX_SIZE + BOX_MARGIN)
+def y_position(year_num):
+    "get vertical position on the page for a given year number (starting from 0)"
+    return Y_MARGIN + year_num * (BOX_SIZE + BOX_MARGIN)
 
 
 class Calendar:
+    """
+    Calendar generator class
+
+    Instantiated with a config (Namespace) object,
+    which should have the following properties:
+
+    title - calendar title
+    num_years - number of years to display
+    start_date - date on which calendar should start
+    """
+
     def __init__(self, config):
         # Start on Monday (Monday is 0, Sunday is 6)
         self.num_years = config.num_years
@@ -63,15 +77,20 @@ class Calendar:
             year=self.start_date.year + config.num_years
         )
         self.title = config.title
+        surface = cairo.PDFSurface(config.filename, DOC_WIDTH, DOC_HEIGHT)
+        self.ctx = cairo.Context(surface)
 
     def bounded_weeks(self, week_iter):
+        "take dates from iterator below the upper bound"
         predicate = lambda date: date < self.end_date
         return itertools.takewhile(predicate, week_iter)
 
     def positioned_weeks(self, week_iter):
+        "convert dates to dicts with positioning data"
         return map(self.position, week_iter)
 
     def position(self, date):
+        "determine positioning of a date"
         isodate = date.isocalendar()
         year = isodate.year - self.start_date.year
         week = isodate.week - 1
@@ -89,12 +108,10 @@ class Calendar:
             "pos_y": y_position(year),
         }
 
-    def draw_square(self, d, fillcolour=(1, 1, 1)):
-        """
-        Draws a square for year, week
-        """
-        pos_x = d["pos_x"]
-        pos_y = d["pos_y"]
+    def draw_square(self, week, fillcolour=(1, 1, 1)):
+        "draw a prepositioned box representing given year, week"
+        pos_x = week["pos_x"]
+        pos_y = week["pos_y"]
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
         self.ctx.set_source_rgba(*fillcolour, 0.75)
@@ -103,6 +120,7 @@ class Calendar:
         self.ctx.stroke()
 
     def center_text(self, pos_x, pos_y, box_width, box_height, label):
+        "place text on the page, centered within giving bounds"
         text_width, text_height = self.text_size(label)
         self.ctx.move_to(
             pos_x + (box_width - text_width) / 2,
@@ -111,19 +129,24 @@ class Calendar:
         self.ctx.show_text(label)
 
     def draw_grid(self):
-        """
-        Draws the whole grid of 52x90 squares
-        """
+        "render the week squares"
         self.ctx.set_font_size(TINYFONT_SIZE)
         self.ctx.select_font_face(
             FONT,
             cairo.FONT_SLANT_ITALIC,
             cairo.FONT_WEIGHT_NORMAL,
         )
-        for d in self.positioned_weeks(self.bounded_weeks(weeks(self.start_date))):
-            self.draw_square(d)
+        proc = [
+            weeks,
+            self.bounded_weeks,
+            self.positioned_weeks,
+        ]
+        reducer = lambda agg, func: func(agg)
+        for week in functools.reduce(reducer, proc, self.start_date):
+            self.draw_square(week)
 
     def draw_months(self):
+        "render labeled columns for months"
         months = [
             "Jan",
             "Feb",
@@ -142,9 +165,9 @@ class Calendar:
         for i, label in enumerate(months):
             start = (datetime(2000, i + 1, 1) - ref).days
             end = (datetime(2000 + (i + 1) // 12, (i + 1) % 12 + 1, 1) - ref).days - 1
-            x = x_position(*divmod(start, 7))
-            y = y_position(0) - 2 * BOX_MARGIN
-            width = x_position(*divmod(end, 7)) - x
+            pos_x = x_position(*divmod(start, 7))
+            pos_y = y_position(0) - 2 * BOX_MARGIN
+            width = x_position(*divmod(end, 7)) - pos_x
             self.ctx.set_source_rgb(0, 0, 0)
             self.ctx.set_font_size(TINYFONT_SIZE)
             self.ctx.select_font_face(
@@ -152,15 +175,18 @@ class Calendar:
                 cairo.FONT_SLANT_NORMAL,
                 cairo.FONT_WEIGHT_NORMAL,
             )
-            self.center_text(x, y - BOX_SIZE - BOX_MARGIN, width, BOX_SIZE, label)
+            self.center_text(
+                pos_x, pos_y - BOX_SIZE - BOX_MARGIN, width, BOX_SIZE, label
+            )
             if not i % 2:
-                height = y_position(91) - y + 3 * BOX_MARGIN
+                height = y_position(91) - pos_y + 3 * BOX_MARGIN
                 self.ctx.set_line_width(1)
                 self.ctx.set_source_rgb(0.85, 0.85, 0.85)
-                self.ctx.rectangle(x, y, width, height)
+                self.ctx.rectangle(pos_x, pos_y, width, height)
                 self.ctx.fill()
 
     def label_years(self):
+        "add year labels to margin"
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.set_font_size(TINYFONT_SIZE)
         self.ctx.select_font_face(
@@ -168,20 +194,17 @@ class Calendar:
             cairo.FONT_SLANT_NORMAL,
             cairo.FONT_WEIGHT_NORMAL,
         )
-        for n in range(self.num_years + 1):
+        for year_num in range(self.num_years + 1):
             self.center_text(
                 X_MARGIN / 3,
-                y_position(n),
+                y_position(year_num),
                 X_MARGIN / 2,
                 BOX_SIZE,
-                str(n + self.start_date.year),
+                str(year_num + self.start_date.year),
             )
 
-    def render(self, filename):
-        # Fill background with white
-        surface = cairo.PDFSurface(filename, DOC_WIDTH, DOC_HEIGHT)
-        self.ctx = cairo.Context(surface)
-
+    def render(self):
+        "render the calendar"
         self.ctx.set_source_rgb(1, 1, 1)
         self.ctx.rectangle(0, 0, DOC_WIDTH, DOC_HEIGHT)
         self.ctx.fill()
@@ -201,10 +224,12 @@ class Calendar:
         self.ctx.show_page()
 
     def text_size(self, text):
+        "get size of text rendered with current font selection"
         return self.ctx.text_extents(text)[2:4]
 
 
 def parse_args():
+    "parse command line arguments"
     parser = argparse.ArgumentParser(
         description='\nGenerate a personalized "Life '
         ' Calendar", inspired by the calendar with the same name from the '
@@ -232,7 +257,7 @@ def parse_args():
         "--num-years",
         type=int,
         dest="num_years",
-        help='number of years (default is "%d")' % NUM_ROWS,
+        help=f'number of years (default is "{NUM_ROWS}")',
         default=NUM_ROWS,
     )
 
@@ -241,7 +266,7 @@ def parse_args():
         "--title",
         type=str,
         dest="title",
-        help='Calendar title text (default is "%s")' % DEFAULT_TITLE,
+        help=f'Calendar title text (default is "{DEFAULT_TITLE}")',
         default=DEFAULT_TITLE,
     )
 
@@ -249,10 +274,11 @@ def parse_args():
 
 
 def main():
+    "entry point: parse cli args and render calendar"
     args = parse_args()
     calendar = Calendar(args)
-    calendar.render(args.filename)
-    print("Created %s" % args.filename)
+    calendar.render()
+    print(f"Created {args.filename}")
 
 
 if __name__ == "__main__":
