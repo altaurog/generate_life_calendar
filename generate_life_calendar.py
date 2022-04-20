@@ -146,20 +146,6 @@ class Calendar:
         self.set_color(0, 1)
         self.ctx.stroke()
 
-    def center_text(self, pos_x, pos_y, box_width, box_height, label):
-        "render text on the page, centered within giving bounds"
-        text_width, text_height = self.text_size(label)
-        self.ctx.move_to(
-            pos_x + (box_width - text_width) / 2,
-            pos_y + (box_height + text_height) / 2,
-        )
-        self.ctx.show_text(label)
-
-    def set_color(self, color_id, alpha=1):
-        "set rgb and alpha using preselected palette"
-        rgb = self.palette.rgb(color_id)
-        self.ctx.set_source_rgba(*rgb, alpha)
-
     def draw_grid(self):
         "render the week squares"
         self.ctx.set_font_size(TINYFONT_SIZE)
@@ -273,6 +259,20 @@ class Calendar:
         self.draw_heb_year_labels()
         self.draw_grid()
         self.ctx.show_page()
+
+    def center_text(self, pos_x, pos_y, box_width, box_height, label):
+        "render text on the page, centered within giving bounds"
+        text_width, text_height = self.text_size(label)
+        self.ctx.move_to(
+            pos_x + (box_width - text_width) / 2,
+            pos_y + (box_height + text_height) / 2,
+        )
+        self.ctx.show_text(label)
+
+    def set_color(self, color_id, alpha=1):
+        "set rgb and alpha using preselected palette"
+        rgb = self.palette.rgb(color_id)
+        self.ctx.set_source_rgba(*rgb, alpha)
 
     def text_size(self, text):
         "get size of text rendered with current font selection"
