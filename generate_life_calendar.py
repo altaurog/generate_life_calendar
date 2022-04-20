@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 
 import cairo
 
+import colorbrewer
+
 DOC_WIDTH = 1872  # 26 inches
 DOC_HEIGHT = 2880  # 40 inches
 DOC_NAME = "life_calendar.pdf"
@@ -79,6 +81,7 @@ class Calendar:
         self.title = config.title
         surface = cairo.PDFSurface(config.filename, DOC_WIDTH, DOC_HEIGHT)
         self.ctx = cairo.Context(surface)
+        self.palette = colorbrewer.Palette(0)
 
     def bounded_weeks(self, week_iter):
         "take dates from iterator below the upper bound"
@@ -108,15 +111,15 @@ class Calendar:
             "pos_y": y_position(year),
         }
 
-    def draw_square(self, week, fillcolour=(1, 1, 1)):
+    def draw_square(self, week):
         "draw a prepositioned box representing given year, week"
         pos_x = week["pos_x"]
         pos_y = week["pos_y"]
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
-        self.ctx.set_source_rgba(*fillcolour, 0.75)
+        self.set_color(3, 0.75)
         self.ctx.fill_preserve()
-        self.ctx.set_source_rgba(0, 0, 0, 1)
+        self.set_color(0, 1)
         self.ctx.stroke()
 
     def center_text(self, pos_x, pos_y, box_width, box_height, label):
@@ -127,6 +130,11 @@ class Calendar:
             pos_y + (box_height + text_height) / 2,
         )
         self.ctx.show_text(label)
+
+    def set_color(self, color_id, alpha=1):
+        "set rgb and alpha using preselected palette"
+        rgb = self.palette.rgb(color_id)
+        self.ctx.set_source_rgba(*rgb, alpha)
 
     def draw_grid(self):
         "render the week squares"
@@ -168,7 +176,7 @@ class Calendar:
             pos_x = x_position(*divmod(start, 7))
             pos_y = y_position(0) - 2 * BOX_MARGIN
             width = x_position(*divmod(end, 7)) - pos_x
-            self.ctx.set_source_rgb(0, 0, 0)
+            self.set_color(0, 1)
             self.ctx.set_font_size(TINYFONT_SIZE)
             self.ctx.select_font_face(
                 FONT,
@@ -181,13 +189,13 @@ class Calendar:
             if not i % 2:
                 height = y_position(91) - pos_y + 3 * BOX_MARGIN
                 self.ctx.set_line_width(1)
-                self.ctx.set_source_rgb(0.85, 0.85, 0.85)
+                self.set_color(2, 1)
                 self.ctx.rectangle(pos_x, pos_y, width, height)
                 self.ctx.fill()
 
     def label_years(self):
         "add year labels to margin"
-        self.ctx.set_source_rgb(0, 0, 0)
+        self.set_color(0, 1)
         self.ctx.set_font_size(TINYFONT_SIZE)
         self.ctx.select_font_face(
             FONT,
@@ -210,7 +218,7 @@ class Calendar:
             cairo.FONT_SLANT_NORMAL,
             cairo.FONT_WEIGHT_BOLD,
         )
-        self.ctx.set_source_rgb(0, 0, 0)
+        self.set_color(1, 1)
         self.ctx.set_font_size(BIGFONT_SIZE)
         self.center_text(0, 0, DOC_WIDTH, Y_MARGIN, self.title)
 
