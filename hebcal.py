@@ -37,7 +37,7 @@ class HebrewCalendar:
             "-i",
             "--no-modern",
             "--years",
-            str(num_years + 1),
+            str(num_years + 2),
             str(start_date.year),
         ]
         proc = subprocess.run(cmd, check=True, encoding="utf-8", capture_output=True)

@@ -92,11 +92,12 @@ class Calendar:
 
     def __init__(self, config):
         # Start on Monday (Monday is 0, Sunday is 6)
-        self.num_years = config.num_years
         self.start_date = config.start_date - timedelta(config.start_date.weekday())
+        self.start_year = self.start_date.isocalendar().year
         self.end_date = self.start_date.replace(
             year=self.start_date.year + config.num_years
-        )
+        ) - timedelta(1)
+        self.num_years = self.end_date.isocalendar().year - self.start_year
         self.title = config.title
         surface = cairo.PDFSurface(config.filename, PAGE_WIDTH, PAGE_HEIGHT)
         self.ctx = cairo.Context(surface)
@@ -117,7 +118,7 @@ class Calendar:
     def position(self, date):
         "determine positioning of a date"
         isodate = date.isocalendar()
-        year = isodate.year - self.start_date.year
+        year = isodate.year - self.start_year
         week = isodate.week - 1
         offset = datetime(isodate.year, 1, 1).weekday()
         if offset > 3:
@@ -227,7 +228,7 @@ class Calendar:
                 y_position(year_num),
                 X_MARGIN / 2,
                 BOX_SIZE,
-                str(year_num + self.start_date.year),
+                str(year_num + self.start_year),
             )
 
     def draw_heb_year_labels(self):
@@ -239,7 +240,7 @@ class Calendar:
             cairo.FONT_SLANT_NORMAL,
             cairo.FONT_WEIGHT_NORMAL,
         )
-        for year_num in range(-1, self.num_years):
+        for year_num in range(-1, self.num_years + 1):
             self.center_text(
                 PAGE_WIDTH - X_MARGIN,
                 y_position(year_num) + BOX_SIZE / 2,
