@@ -33,6 +33,21 @@ BOX_LINE_WIDTH = 1.5
 BOX_SIZE = ((DOC_HEIGHT - (Y_MARGIN + 36)) / NUM_ROWS) - BOX_MARGIN
 X_MARGIN = (DOC_WIDTH - ((BOX_SIZE + BOX_MARGIN) * NUM_COLUMNS)) / 2
 
+MONTHS = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
+
 
 def parse_date(date):
     "parse a string into a date"
@@ -166,22 +181,8 @@ class Calendar:
 
     def draw_months(self):
         "render labeled columns for months"
-        months = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ]
         ref = datetime(2000, 1, 1)
-        for i, label in enumerate(months):
+        for i, label in enumerate(MONTHS):
             start = (datetime(2000, i + 1, 1) - ref).days
             end = (datetime(2000 + (i + 1) // 12, (i + 1) % 12 + 1, 1) - ref).days - 1
             pos_x = x_position(*divmod(start, 7))
