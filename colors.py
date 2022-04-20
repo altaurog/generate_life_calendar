@@ -1,5 +1,7 @@
 """
 Color Palettes
+
+source: https://colorbrewer2.org/#type=diverging&scheme=BrBG&n=5
 """
 # pylint: disable=too-few-public-methods
 

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 import cairo
 
-import colorbrewer
+import colors
 import hebcal
 
 # A2 paper
@@ -101,7 +101,7 @@ class Calendar:
         self.title = config.title
         surface = cairo.PDFSurface(config.filename, PAGE_WIDTH, PAGE_HEIGHT)
         self.ctx = cairo.Context(surface)
-        self.palette = colorbrewer.Palette(config.color_palette, config.invert_palatte)
+        self.palette = colors.Palette(config.color_palette, config.invert_palatte)
         self.jewish_calendar = config.jewish_calendar or config.israeli
         if self.jewish_calendar:
             try:
