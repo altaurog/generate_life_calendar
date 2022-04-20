@@ -12,26 +12,29 @@ import cairo
 import colorbrewer
 import hebcal
 
-DOC_WIDTH = 1872  # 26 inches
-DOC_HEIGHT = 2880  # 40 inches
+# A2 paper
+PAGE_WIDTH = 1190  # 26 inches
+PAGE_HEIGHT = 1684  # 40 inches
 DOC_NAME = "life_calendar.pdf"
 
 FONT = "Brocha"
-BIGFONT_SIZE = 40
-SMALLFONT_SIZE = 16
-TINYFONT_SIZE = 14
+BIGFONT_SIZE = 24
+SMALLFONT_SIZE = 11
 
 DEFAULT_TITLE = "LIFE CALENDAR"
 
 NUM_ROWS = 90
 NUM_COLUMNS = 53  # Some years have 53 weeks.
 
-Y_MARGIN = 144
-BOX_MARGIN = 6
+BOX_MARGIN_FRAC = 0.175
 
-BOX_LINE_WIDTH = 1.5
-BOX_SIZE = ((DOC_HEIGHT - (Y_MARGIN + 36)) / NUM_ROWS) - BOX_MARGIN
-X_MARGIN = (DOC_WIDTH - ((BOX_SIZE + BOX_MARGIN) * NUM_COLUMNS)) / 2
+TOP_MARGIN = 72
+BOTTOM_MARGIN = 42
+CHART_HEIGHT = PAGE_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN
+BOX_SIZE = CHART_HEIGHT / NUM_ROWS / (1 + BOX_MARGIN_FRAC)
+BOX_MARGIN = BOX_SIZE * BOX_MARGIN_FRAC
+BOX_LINE_WIDTH = 1
+X_MARGIN = (PAGE_WIDTH - ((BOX_SIZE + BOX_MARGIN) * NUM_COLUMNS)) / 2
 
 MONTHS = [
     "Jan",
@@ -67,12 +70,12 @@ def weeks(start_date):
 
 def x_position(week, day):
     "get horizontal position on the page for given week and day"
-    return X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) + day * BOX_SIZE / 7
+    return X_MARGIN + week * (BOX_SIZE + BOX_MARGIN) + day * BOX_SIZE / 7 + BOX_SIZE / 2
 
 
 def y_position(year_num):
     "get vertical position on the page for a given year number (starting from 0)"
-    return Y_MARGIN + year_num * (BOX_SIZE + BOX_MARGIN)
+    return TOP_MARGIN + year_num * (BOX_SIZE + BOX_MARGIN)
 
 
 class Calendar:
@@ -95,7 +98,7 @@ class Calendar:
             year=self.start_date.year + config.num_years
         )
         self.title = config.title
-        surface = cairo.PDFSurface(config.filename, DOC_WIDTH, DOC_HEIGHT)
+        surface = cairo.PDFSurface(config.filename, PAGE_WIDTH, PAGE_HEIGHT)
         self.ctx = cairo.Context(surface)
         self.palette = colorbrewer.Palette(config.color_palette, config.invert_palatte)
         self.jewish_calendar = config.jewish_calendar
@@ -166,7 +169,7 @@ class Calendar:
 
     def draw_grid(self):
         "render the week squares"
-        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.set_font_size(SMALLFONT_SIZE)
         self.ctx.select_font_face(
             FONT,
             cairo.FONT_SLANT_ITALIC,
@@ -194,7 +197,7 @@ class Calendar:
             pos_x = x_position(*divmod(start, 7))
             width = x_position(*divmod(end, 7)) - pos_x
             self.set_color(0, 1)
-            self.ctx.set_font_size(TINYFONT_SIZE)
+            self.ctx.set_font_size(SMALLFONT_SIZE)
             self.ctx.select_font_face(
                 FONT,
                 cairo.FONT_SLANT_NORMAL,
@@ -212,7 +215,7 @@ class Calendar:
     def draw_year_labels(self):
         "render secular year labels in margin"
         self.set_color(0, 1)
-        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.set_font_size(SMALLFONT_SIZE)
         self.ctx.select_font_face(
             FONT,
             cairo.FONT_SLANT_NORMAL,
@@ -220,7 +223,7 @@ class Calendar:
         )
         for year_num in range(self.num_years + 1):
             self.center_text(
-                X_MARGIN / 3,
+                X_MARGIN / 2,
                 y_position(year_num),
                 X_MARGIN / 2,
                 BOX_SIZE,
@@ -230,7 +233,7 @@ class Calendar:
     def draw_heb_year_labels(self):
         "render secular year labels in margin"
         self.set_color(0, 1)
-        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.set_font_size(SMALLFONT_SIZE)
         self.ctx.select_font_face(
             FONT,
             cairo.FONT_SLANT_NORMAL,
@@ -238,7 +241,7 @@ class Calendar:
         )
         for year_num in range(-1, self.num_years):
             self.center_text(
-                DOC_WIDTH - X_MARGIN,
+                PAGE_WIDTH - X_MARGIN,
                 y_position(year_num) + BOX_SIZE / 2,
                 X_MARGIN / 2,
                 BOX_SIZE,
@@ -254,7 +257,7 @@ class Calendar:
         )
         self.set_color(1, 1)
         self.ctx.set_font_size(BIGFONT_SIZE)
-        self.center_text(0, 0, DOC_WIDTH, Y_MARGIN, self.title)
+        self.center_text(0, 0, PAGE_WIDTH, TOP_MARGIN * 2 / 3, self.title)
 
     def render(self):
         "render the calendar"
