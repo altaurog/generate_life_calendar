@@ -343,28 +343,28 @@ def parse_args():
         "-j",
         "--jewish-calendar",
         action="store_true",
-        help=f"Include Hebrew calendar years and Jewish holidays",
+        help="Include Hebrew calendar years and Jewish holidays",
     )
 
     parser.add_argument(
         "-i",
         "--israeli",
         action="store_true",
-        help=f"Use Israeli Jewish holidays (implies -j)",
+        help="Use Israeli Jewish holidays (implies -j)",
     )
 
     parser.add_argument(
         "-c",
         "--color-palette",
         type=int,
-        help=f"Color palette (0 -- 8)",
+        help="Color palette (0 -- 8)",
         default=0,
     )
 
     parser.add_argument(
         "--invert-palatte",
         action="store_true",
-        help=f"Invert palatte",
+        help="Invert palatte",
     )
 
     return parser.parse_args()
