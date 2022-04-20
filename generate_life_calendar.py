@@ -236,6 +236,24 @@ class Calendar:
                 str(year_num + self.start_date.year),
             )
 
+    def draw_heb_year_labels(self):
+        "render secular year labels in margin"
+        self.set_color(0, 1)
+        self.ctx.set_font_size(TINYFONT_SIZE)
+        self.ctx.select_font_face(
+            FONT,
+            cairo.FONT_SLANT_NORMAL,
+            cairo.FONT_WEIGHT_NORMAL,
+        )
+        for year_num in range(-1, self.num_years):
+            self.center_text(
+                DOC_WIDTH - X_MARGIN,
+                y_position(year_num) + BOX_SIZE / 2,
+                X_MARGIN / 2,
+                BOX_SIZE,
+                hebcal.heb_year(year_num + self.start_date.year),
+            )
+
     def draw_title(self):
         "render calendar title"
         self.ctx.select_font_face(
@@ -252,6 +270,7 @@ class Calendar:
         self.draw_title()
         self.draw_months()
         self.draw_year_labels()
+        self.draw_heb_year_labels()
         self.draw_grid()
         self.ctx.show_page()
 

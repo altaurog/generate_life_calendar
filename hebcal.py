@@ -20,6 +20,13 @@ holiday = (
 major = holiday[2:]
 
 
+def heb_year(secular_year):
+    "get hebrew year at end of secular year"
+    cmd = ["hebcal", "-dh", "12", "31", str(secular_year)]
+    proc = subprocess.run(cmd, check=True, encoding="utf-8", capture_output=True)
+    return proc.stdout.split()[-1]
+
+
 class HebrewCalendar:
     "Hebrew Calendar"
 
