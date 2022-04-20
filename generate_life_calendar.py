@@ -133,7 +133,7 @@ class Calendar:
             )
             self.ctx.fill()
 
-    def draw_square(self, week):
+    def draw_week(self, week):
         "draw a prepositioned box representing given year, week"
         pos_x = week["pos_x"]
         pos_y = week["pos_y"]
@@ -176,7 +176,7 @@ class Calendar:
         ]
         reducer = lambda agg, func: func(agg)
         for week in functools.reduce(reducer, proc, self.start_date):
-            self.draw_square(week)
+            self.draw_week(week)
 
     def draw_months(self):
         "render labeled columns for months"
@@ -218,7 +218,7 @@ class Calendar:
                 self.ctx.rectangle(pos_x, pos_y, width, height)
                 self.ctx.fill()
 
-    def label_years(self):
+    def draw_year_labels(self):
         "add year labels to margin"
         self.set_color(0, 1)
         self.ctx.set_font_size(TINYFONT_SIZE)
@@ -248,7 +248,7 @@ class Calendar:
         self.center_text(0, 0, DOC_WIDTH, Y_MARGIN, self.title)
 
         self.draw_months()
-        self.label_years()
+        self.draw_year_labels()
         self.draw_grid()
         self.ctx.show_page()
 
