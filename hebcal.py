@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 holiday = (
     "Chanukah",
+    "Purim",
     "Shushan Purim",
     "Pesach",
     "Shavuot",
@@ -16,9 +17,10 @@ holiday = (
     "Yom Kippur",
     "Sukkot",
     "Shmini Atzeret",
+    "Simchat Torah",
 )
 
-major = holiday[2:]
+major = holiday[3:]
 
 
 def heb_year(secular_year):
@@ -31,11 +33,10 @@ def heb_year(secular_year):
 class HebrewCalendar:
     "Hebrew Calendar"
 
-    def __init__(self, start_date, num_years):
+    def __init__(self, start_date, num_years, israeli):
         cmd = [
             "hebcal",
-            "-g",
-            "-i",
+            "-gi" if israeli else "-g",
             "--no-modern",
             "--years",
             str(num_years + 2),

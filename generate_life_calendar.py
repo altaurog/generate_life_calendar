@@ -102,9 +102,11 @@ class Calendar:
         surface = cairo.PDFSurface(config.filename, PAGE_WIDTH, PAGE_HEIGHT)
         self.ctx = cairo.Context(surface)
         self.palette = colorbrewer.Palette(config.color_palette, config.invert_palatte)
-        self.jewish_calendar = config.jewish_calendar
+        self.jewish_calendar = config.jewish_calendar or config.israeli
         if self.jewish_calendar:
-            self.hebcal = hebcal.HebrewCalendar(self.start_date, self.num_years)
+            self.hebcal = hebcal.HebrewCalendar(
+                self.start_date, self.num_years, config.israeli
+            )
 
     def bounded_weeks(self, week_iter):
         "take dates from iterator below the upper bound"
@@ -336,6 +338,13 @@ def parse_args():
         "--jewish-calendar",
         action="store_true",
         help=f"Include Hebrew calendar years and Jewish holidays",
+    )
+
+    parser.add_argument(
+        "-i",
+        "--israeli",
+        action="store_true",
+        help=f"Use Israeli Jewish holidays (implies -j)",
     )
 
     parser.add_argument(
