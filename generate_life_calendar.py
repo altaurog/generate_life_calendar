@@ -82,7 +82,7 @@ class Calendar:
         self.title = config.title
         surface = cairo.PDFSurface(config.filename, DOC_WIDTH, DOC_HEIGHT)
         self.ctx = cairo.Context(surface)
-        self.palette = colorbrewer.Palette(0)
+        self.palette = colorbrewer.Palette(config.color_palette, config.invert_palatte)
         self.hebcal = hebcal.HebrewCalendar(self.start_date, self.num_years)
 
     def bounded_weeks(self, week_iter):
@@ -319,6 +319,20 @@ def parse_args():
         dest="title",
         help=f'Calendar title text (default is "{DEFAULT_TITLE}")',
         default=DEFAULT_TITLE,
+    )
+
+    parser.add_argument(
+        "-c",
+        "--color-palette",
+        type=int,
+        help=f"Color palette (0 -- 8)",
+        default=0,
+    )
+
+    parser.add_argument(
+        "--invert-palatte",
+        action="store_true",
+        help=f"Invert palatte",
     )
 
     return parser.parse_args()
