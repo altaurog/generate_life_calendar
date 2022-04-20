@@ -186,11 +186,12 @@ class Calendar:
     def draw_months(self):
         "render labeled columns for months"
         ref = datetime(2000, 1, 1)
+        pos_y = y_position(0) - BOX_MARGIN
+        height = y_position(self.num_years + 1) - pos_y + 2 * BOX_MARGIN
         for i, label in enumerate(MONTHS):
             start = (datetime(2000, i + 1, 1) - ref).days
             end = (datetime(2000 + (i + 1) // 12, (i + 1) % 12 + 1, 1) - ref).days - 1
             pos_x = x_position(*divmod(start, 7))
-            pos_y = y_position(0) - 2 * BOX_MARGIN
             width = x_position(*divmod(end, 7)) - pos_x
             self.set_color(0, 1)
             self.ctx.set_font_size(TINYFONT_SIZE)
@@ -203,7 +204,6 @@ class Calendar:
                 pos_x, pos_y - BOX_SIZE - BOX_MARGIN, width, BOX_SIZE, label
             )
             if not i % 2:
-                height = y_position(91) - pos_y + 3 * BOX_MARGIN
                 self.ctx.set_line_width(1)
                 self.set_color(2, 1)
                 self.ctx.rectangle(pos_x, pos_y, width, height)
