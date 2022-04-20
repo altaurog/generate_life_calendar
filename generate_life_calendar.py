@@ -205,10 +205,6 @@ class Calendar:
 
     def render(self):
         "render the calendar"
-        self.ctx.set_source_rgb(1, 1, 1)
-        self.ctx.rectangle(0, 0, DOC_WIDTH, DOC_HEIGHT)
-        self.ctx.fill()
-
         self.ctx.select_font_face(
             FONT,
             cairo.FONT_SLANT_NORMAL,
