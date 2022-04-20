@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import cairo
 
 import colorbrewer
+import hebcal
 
 DOC_WIDTH = 1872  # 26 inches
 DOC_HEIGHT = 2880  # 40 inches
@@ -82,6 +83,7 @@ class Calendar:
         surface = cairo.PDFSurface(config.filename, DOC_WIDTH, DOC_HEIGHT)
         self.ctx = cairo.Context(surface)
         self.palette = colorbrewer.Palette(0)
+        self.hebcal = hebcal.HebrewCalendar(self.start_date, self.num_years)
 
     def bounded_weeks(self, week_iter):
         "take dates from iterator below the upper bound"
@@ -111,6 +113,26 @@ class Calendar:
             "pos_y": y_position(year),
         }
 
+    def annotated_weeks(self, week_iter):
+        "add hebrew calendar annotations to week data"
+        for week in week_iter:
+            yield {"hebcal": self.hebcal.events(week["date"]), **week}
+
+    def draw_holidays(self, week):
+        "draw color boxes for holidays"
+        day_width = BOX_SIZE / 7
+        pos_x = week["pos_x"]
+        pos_y = week["pos_y"]
+        for event, day, num_days in week.get("hebcal", []):
+            self.set_color(4 + event, 0.75)
+            self.ctx.rectangle(
+                pos_x + day * day_width,
+                pos_y,
+                num_days * day_width,
+                BOX_SIZE,
+            )
+            self.ctx.fill()
+
     def draw_square(self, week):
         "draw a prepositioned box representing given year, week"
         pos_x = week["pos_x"]
@@ -118,7 +140,9 @@ class Calendar:
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
         self.set_color(3, 0.75)
-        self.ctx.fill_preserve()
+        self.ctx.fill()
+        self.draw_holidays(week)
+        self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
         self.set_color(0, 1)
         self.ctx.stroke()
 
@@ -148,6 +172,7 @@ class Calendar:
             weeks,
             self.bounded_weeks,
             self.positioned_weeks,
+            self.annotated_weeks,
         ]
         reducer = lambda agg, func: func(agg)
         for week in functools.reduce(reducer, proc, self.start_date):
