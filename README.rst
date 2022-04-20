@@ -1,90 +1,86 @@
 Personalised Life Calendar Generator
 ====================================
 
-I'm a fan of the
-`Life Calendars <https://store.waitbutwhy.com/collections/life-calendars>`_ that
-can be found on Tim Urban's website www.waitbutwhy.com. It's basically a
-calendar for your whole life on a single poster, with a single box representing
-a week, a single row represrenting a year (52 boxes), and 90 rows for a total
-of 90 years.
+This is a fork of `Erik Nyquist’s Life Calendar repo`_.  It contains a
+python script for generating a pdf `Life Calendar`_, such as can be found
+on Tim Urban's website www.waitbutwhy.com.  Each box on the calendar
+represents a week, and each row of boxes represents a year.
 
-I liked having it on my wall, and for a while I tried using it to mark
-significant past events, as well as future goals & plans. There are a couple of
-practical problems with this, however, because of the current design of the
-Life Calendars. The main problem is that there are no real date references on
-the poster, unless you write them in yourself, so honing in on a specific box
-(say, the week you're currently in right now) is tedious and error-prone.
+The script takes your birthday as an argument, and generates a .pdf file.
+The weeks always start on Monday (mainly because the isocalendar weeks
+implemented by the Python standard library start on Monday).
 
-The reason for this is obvious; the dates shown would be specific to your own
-birthday, so you can't make one poster for everybody if there are dates on it.
-The minimalist design of the poster kind of compensates for this, since you are
-left with plenty of room to write/draw whatever you want. Fair enough.
+What’s Different About This Fork
+--------------------------------
 
-I'm lazy, though. I don't want to write all those dates in. Plus, if I lose or
-damage the poster, I'd have to do all that work again. So I did this instead.
+This fork is a significant refactor of the upstream code, bordering on a
+rewrite, with several added features:
 
-This script takes your birthday as an argument, and generates a .pdf file
-containing a life calendar annotated with your personal dates. (Document size
-is 29x40 inches, for best printing results)
+* Building on Morten Fyhn Amundsen’s fork, which accounts for the fact that
+  some years have 53 weeks, the boxes are shifted to correctly align week
+  days and dates.
 
-Several additional features make navigation through the calendar a bit easier;
+* The months of the year are displayed as columns behind the weeks,
+  so it is much easier to identify dates.
 
-1. Rather than just starting exactly on your birthday, it starts on the last
-   Monday before your birthday (i.e. the first day of the week you were born).
-   This makes it much easier to identify which box holds a particular date, since
-   every box starts with a Monday and represents "the week starting on <date>"
+* Output pdf format is A2 paper
 
-2. For each row, the date of the first day of the first box in the row is
-   printed on the right hand side. This date is always a Monday, as explained in
-   #1.
+* The output now has some color, several color palettes are provided.
 
-3. Boxes containing your birthday are shaded
+* There is an option to show the Hebrew calendar year in addition to the
+  Gregorian calendar, with Jewish holidays marked on the calendar.
 
-4. Boxes containing the first day of the year are shaded (a different shade)
+.. _Erik Nyquist’s Life Calendar repo:
+   https://github.com/eriknyquist/generate_life_calendar
 
-Installation
-============
+.. _Life Calendar: https://store.waitbutwhy.com/collections/life-calendars
+
+.. _Morten Fyhn Amundsen’s fork:
+  https://github.com/mortenfyhn/generate_life_calendar
+
 
 Dependencies
 ------------
 
-You must install the following dependencies before you can generate a
-Life Calendar:
+* `PyCairo <https://pypi.python.org/pypi/pycairo>`_
 
-* `PyCairo <https://pypi.python.org/pypi/pycairo>`_ (Python library for drawing
-  stuff & generating documents/images)
-
-  Install from the link above, or if you're running something like Debian/Ubuntu
-  I'll save you some time, ``sudo apt-get install python-cairo``
-
-Download
---------
-
-It's just a single python script, no fancy installation. Just clone this repo
-to get the script
-
-::
-
-    $> git clone https://github.com/eriknyquist/generate_life_calendar
+* `hebcal <https://github.com/hebcal/hebcal>`_ is required for Hebrew calendar years
+  and Jewish holidays.
 
 Usage
-=====
-
-After cloning this repo, just run the script, passing in your birth date (format
-can be either dd-mm-yyyy or dd/mm/yyyy)
-
+------
 ::
 
-    $> cd generate_life_calendar
-    $> python generate_life_calendar.py "23/10/1990"
+  usage: generate_life_calendar.py [-h] [-f FILENAME] [-y NUM_YEARS] [-t TITLE] [-j] [-i]
+                                   [-c COLOR_PALETTE] [--invert-palatte]
+                                   start_date
 
-    Created life_calendar.pdf
+  Generate a personalized "Life Calendar", inspired by the calendar with the same name from the
+  waitbutwhy.com store
 
-By default, the output will be a file called ``life_calendar.pdf``. You can
-change the output filename with the ``-f`` option
+  positional arguments:
+    start_date            starting date; your birthday,in either dd/mm/yyyy or dd-mm-yyyy format
 
-::
+  optional arguments:
+    -h, --help            show this help message and exit
+    -f FILENAME, --filename FILENAME
+                          output filename
+    -y NUM_YEARS, --num-years NUM_YEARS
+                          number of years (default is "90")
+    -t TITLE, --title TITLE
+                          Calendar title text (default is "LIFE CALENDAR")
+    -j, --jewish-calendar
+                          Include Hebrew calendar years and Jewish holidays
+    -i, --israeli         Use Israeli Jewish holidays (implies -j)
+    -c COLOR_PALETTE, --color-palette COLOR_PALETTE
+                          Color palette (0 -- 8)
+    --invert-palatte      Invert palatte
 
-    $> python generate_life_calendar.py "23/10/1990" -f my_life_calendar.pdf
+License
+--------
+Upstream carries an Apache 2.0 license.  This is arguably a derivative,
+albeit a now distant one, so I guess this carries the upstream license.
+To the extent that an open source license can apply to a set of rgb colors,
+the color palettes are available under `this Apache-like license`_.
 
-    Created my_life_calendar.pdf
+.. _this Apache-like license: https://colorbrewer2.org/export/LICENSE.txt
