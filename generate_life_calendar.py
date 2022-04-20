@@ -104,9 +104,15 @@ class Calendar:
         self.palette = colorbrewer.Palette(config.color_palette, config.invert_palatte)
         self.jewish_calendar = config.jewish_calendar or config.israeli
         if self.jewish_calendar:
-            self.hebcal = hebcal.HebrewCalendar(
-                self.start_date, self.num_years, config.israeli
-            )
+            try:
+                self.hebcal = hebcal.HebrewCalendar(
+                    self.start_date,
+                    self.num_years,
+                    config.israeli,
+                )
+            except FileNotFoundError:
+                print("hebcal not found, Jewish calendar not available")
+                self.jewish_calendar = False
 
     def bounded_weeks(self, week_iter):
         "take dates from iterator below the upper bound"
