@@ -98,7 +98,9 @@ class Calendar:
         surface = cairo.PDFSurface(config.filename, DOC_WIDTH, DOC_HEIGHT)
         self.ctx = cairo.Context(surface)
         self.palette = colorbrewer.Palette(config.color_palette, config.invert_palatte)
-        self.hebcal = hebcal.HebrewCalendar(self.start_date, self.num_years)
+        self.jewish_calendar = config.jewish_calendar
+        if self.jewish_calendar:
+            self.hebcal = hebcal.HebrewCalendar(self.start_date, self.num_years)
 
     def bounded_weeks(self, week_iter):
         "take dates from iterator below the upper bound"
@@ -156,7 +158,8 @@ class Calendar:
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
         self.set_color(3, 0.75)
         self.ctx.fill()
-        self.draw_holidays(week)
+        if self.jewish_calendar:
+            self.draw_holidays(week)
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
         self.set_color(0, 1)
         self.ctx.stroke()
@@ -173,8 +176,9 @@ class Calendar:
             weeks,
             self.bounded_weeks,
             self.positioned_weeks,
-            self.annotated_weeks,
         ]
+        if self.jewish_calendar:
+            proc.append(self.annotated_weeks)
         reducer = lambda agg, func: func(agg)
         for week in functools.reduce(reducer, proc, self.start_date):
             self.draw_week(week)
@@ -257,7 +261,8 @@ class Calendar:
         self.draw_title()
         self.draw_months()
         self.draw_year_labels()
-        self.draw_heb_year_labels()
+        if self.jewish_calendar:
+            self.draw_heb_year_labels()
         self.draw_grid()
         self.ctx.show_page()
 
@@ -320,6 +325,13 @@ def parse_args():
         dest="title",
         help=f'Calendar title text (default is "{DEFAULT_TITLE}")',
         default=DEFAULT_TITLE,
+    )
+
+    parser.add_argument(
+        "-j",
+        "--jewish-calendar",
+        action="store_true",
+        help=f"Include Hebrew calendar years and Jewish holidays",
     )
 
     parser.add_argument(
