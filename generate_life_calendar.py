@@ -147,7 +147,7 @@ class Calendar:
         self.ctx.stroke()
 
     def center_text(self, pos_x, pos_y, box_width, box_height, label):
-        "place text on the page, centered within giving bounds"
+        "render text on the page, centered within giving bounds"
         text_width, text_height = self.text_size(label)
         self.ctx.move_to(
             pos_x + (box_width - text_width) / 2,
@@ -219,7 +219,7 @@ class Calendar:
                 self.ctx.fill()
 
     def draw_year_labels(self):
-        "add year labels to margin"
+        "render secular year labels in margin"
         self.set_color(0, 1)
         self.ctx.set_font_size(TINYFONT_SIZE)
         self.ctx.select_font_face(
@@ -236,8 +236,8 @@ class Calendar:
                 str(year_num + self.start_date.year),
             )
 
-    def render(self):
-        "render the calendar"
+    def draw_title(self):
+        "render calendar title"
         self.ctx.select_font_face(
             FONT,
             cairo.FONT_SLANT_NORMAL,
@@ -247,6 +247,9 @@ class Calendar:
         self.ctx.set_font_size(BIGFONT_SIZE)
         self.center_text(0, 0, DOC_WIDTH, Y_MARGIN, self.title)
 
+    def render(self):
+        "render the calendar"
+        self.draw_title()
         self.draw_months()
         self.draw_year_labels()
         self.draw_grid()
