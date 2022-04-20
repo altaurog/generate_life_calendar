@@ -15,6 +15,7 @@ holiday = (
     "Rosh Hashana",
     "Yom Kippur",
     "Sukkot",
+    "Shmini Atzeret",
 )
 
 major = holiday[2:]
