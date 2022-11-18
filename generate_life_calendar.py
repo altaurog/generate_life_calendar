@@ -102,6 +102,8 @@ class Calendar:
         surface = cairo.PDFSurface(config.filename, PAGE_WIDTH, PAGE_HEIGHT)
         self.ctx = cairo.Context(surface)
         self.palette = colors.Palette(config.color_palette, config.invert_palatte)
+        self.no_month_background = config.no_month_background
+        self.fill_past = config.fill_past
         self.jewish_calendar = config.jewish_calendar or config.israeli
         if self.jewish_calendar:
             try:
@@ -168,7 +170,12 @@ class Calendar:
         pos_y = week["pos_y"]
         self.ctx.set_line_width(BOX_LINE_WIDTH)
         self.ctx.rectangle(pos_x, pos_y, BOX_SIZE, BOX_SIZE)
-        self.set_color(3, 0.75)
+
+        if self.fill_past and week["date"] < datetime.now():
+            self.set_color(0, 0.5)
+        else:
+            self.set_color(3, 0.75)
+
         self.ctx.fill()
         if self.jewish_calendar:
             self.draw_holidays(week)
@@ -215,11 +222,20 @@ class Calendar:
             self.center_text(
                 pos_x, pos_y - BOX_SIZE - BOX_MARGIN, width, BOX_SIZE, label
             )
-            if not i % 2:
-                self.ctx.set_line_width(1)
-                self.set_color(2, 1)
-                self.ctx.rectangle(pos_x, pos_y, width, height)
-                self.ctx.fill()
+            if self.no_month_background:
+                self.set_color(0, 0.5)
+                self.ctx.move_to(pos_x, pos_y - BOX_SIZE - BOX_MARGIN)
+                self.ctx.line_to(pos_x, pos_y)
+                if i == 11:
+                    self.ctx.move_to(pos_x + width, pos_y - BOX_SIZE - BOX_MARGIN)
+                    self.ctx.line_to(pos_x + width, pos_y)
+                self.ctx.stroke()
+            else:
+                if not i % 2:
+                    self.set_color(2, 1)
+                    self.ctx.rectangle(pos_x, pos_y, width, height)
+                    self.ctx.fill()
+
 
     def draw_year_labels(self):
         "render secular year labels in margin"
@@ -365,6 +381,18 @@ def parse_args():
         "--invert-palatte",
         action="store_true",
         help="Invert palatte",
+    )
+
+    parser.add_argument(
+        "--fill-past",
+        action="store_true",
+        help="Fill in weeks in past"
+    )
+
+    parser.add_argument(
+        "--no-month-background",
+        action="store_true",
+        help="Don't draw background columns for months"
     )
 
     return parser.parse_args()
